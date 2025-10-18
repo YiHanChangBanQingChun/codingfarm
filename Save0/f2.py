@@ -32,7 +32,7 @@ for x in range(world_size):
 			till()
 
 # 阶段1：收集初始木材（收获灌木）
-while num_items(Items.Wood) < 15000:
+while num_items(Items.Wood) < 150000:
 	for x in range(world_size):
 		for y in range(world_size):
 			go_to(x, y)
@@ -46,7 +46,7 @@ while num_items(Items.Wood) < 15000:
 				plant(Entities.Tree)
 
 # 阶段2：收集初始草地
-while num_items(Items.Hay) < 15000:
+while num_items(Items.Hay) < 150000:
 	for x in range(world_size):
 		for y in range(world_size):
 			go_to(x, y)
@@ -63,7 +63,7 @@ while num_items(Items.Hay) < 15000:
 
 
 # 阶段3：收集初始胡萝卜
-while num_items(Items.Carrot) < 15000:
+while num_items(Items.Carrot) < 150000:
 	for x in range(world_size):
 		for y in range(world_size):
 			go_to(x, y)
@@ -94,18 +94,20 @@ while True:
 			
 			# 2. 决定种什么
 			# 优先级：树（棋盘格） > 胡萝卜（有木材时） > 南瓜（有胡萝卜时）
-			if entity == None or entity == Entities.Dead_Pumpkin:
+			# if entity == None or entity == Entities.Dead_Pumpkin:
 				# 树：棋盘格模式种植
-				if is_tree_position(x, y):
-					if entity != Entities.Tree and num_items(Items.Wood) > 0:
-						plant(Entities.Tree)
-						entity = Entities.Tree
+				# if is_tree_position(x, y):
+					# if entity != Entities.Tree and num_items(Items.Wood) > 0:
+					# 	plant(Entities.Tree)
+					# 	entity = Entities.Tree
 				# 胡萝卜：如果木材充足且胡萝卜不足
-				elif num_items(Items.Wood) > 5000 and num_items(Items.Carrot) < 5000:
-					plant(Entities.Carrot)
-					entity = Entities.Carrot
+				# elif num_items(Items.Wood) > 5000 and num_items(Items.Carrot) < 5000:
+					# plant(Entities.Carrot)
+					# entity = Entities.Carrot
 				# 南瓜：如果有胡萝卜
-				elif num_items(Items.Carrot) > 5000:
+				# elif num_items(Items.Carrot) > 5000:
+			if entity == None or entity == Entities.Dead_Pumpkin:
+				if num_items(Items.Carrot) > 0:
 					plant(Entities.Pumpkin)
 					entity = Entities.Pumpkin
 			
@@ -114,10 +116,10 @@ while True:
 				if get_water() < 0.4:
 					use_item(Items.Water)
 			
-			# 4. 随机施肥（70%概率）
+			# 4. 随机施肥（90%概率）
 			if entity == Entities.Carrot or entity == Entities.Pumpkin or entity == Entities.Tree:
 				if num_items(Items.Fertilizer) > 0:
-					if random() > 0.7:
+					if random() > 2:
 						use_item(Items.Fertilizer)
 			
 			# 5. 治疗感染
