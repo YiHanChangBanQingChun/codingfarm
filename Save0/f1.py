@@ -287,18 +287,22 @@ def prepare_zone(start_x, end_x):
 					use_item(Items.Water)
 
 def worker_1():
+	change_hat(Hats.Gold_Hat)
 	prepare_zone(0, third_1)
 	harvester_zone(0, third_1)
 
 def worker_2():
+	change_hat(Hats.Brown_Hat)
 	prepare_zone(third_1, third_2)
 	harvester_zone(third_1, third_2)
 
 def worker_3():
+	change_hat(Hats.Green_Hat)
 	prepare_zone(third_2, world_size)
 	harvester_zone(third_2, world_size)
 
 def worker_4():
+	change_hat(Hats.Sunflower_Hat)
 	while True:
 		for x in range(world_size):
 			for y in range(world_size):
@@ -311,6 +315,19 @@ def worker_4():
 						use_item(Items.Water)
 					if num_items(Items.Fertilizer) > 30:
 						use_item(Items.Fertilizer)
+				
+				elif entity == None or entity == Entities.Dead_Pumpkin:
+					if not is_cactus_column(x):
+						if entity == Entities.Dead_Pumpkin:
+							harvest()
+						plant(desired)
+						if get_water() < 0.5:
+							use_item(Items.Water)
+				
+				if entity != Entities.Cactus:
+					if can_harvest():
+						harvest()
+
 
 drone1 = spawn_drone(worker_1)
 drone2 = spawn_drone(worker_2)
