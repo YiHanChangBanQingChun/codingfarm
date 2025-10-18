@@ -1,18 +1,19 @@
 from __builtins__ import *
 
 clear()
-
-world_size = get_world_size()
+n = 22
+set_world_size(n)
+world_size = n
 
 # ========== 配置区 ==========
 # 仙人掌：两组，每组3列
 cactus_group1 = [0, 1, 2]
-cactus_group2 = [3, 4, 5]
+cactus_group2 = [5, 6, 7]
 # 其他作物
-grass_columns = [6, 7]
+grass_columns = [3, 4]
 tree_columns = [8, 9]
-carrot_columns = [10, 11, 12]
-sunflower_columns = [13, 14, 15, 16]  # 扩大向日葵区域
+carrot_columns = [10, 11, 12, 13]
+sunflower_columns = [14, 15, 16]  # 扩大向日葵区域
 pumpkin_columns = [17, 18, 19, 20, 21]
 
 # 恐龙配置：可自定义范围
@@ -392,10 +393,10 @@ def worker_2():
 	cactus_worker(cactus_group2, Hats.Brown_Hat)
 
 def worker_3():
-	harvester_worker(6, 7, Hats.Green_Hat)
+	harvester_worker(3, 5, Hats.Green_Hat)
 
 def worker_4():
-	harvester_worker(7, 8, Hats.Straw_Hat)
+	harvester_worker(8, 9, Hats.Straw_Hat)
 
 def worker_5():
 	harvester_worker(8, 9, Hats.Dinosaur_Hat)

@@ -1,9 +1,13 @@
 from __builtins__ import *
 
-# Build a full-field maze and navigate it elegantly.
+# 优化的迷宫导航 - 使用 A* 算法直奔宝藏
 for _ in range(1000):
-	print("Attempting maze run...", _ + 1)
+	print("Maze run", _ + 1)
 	clear()
+
+	# world = 10
+	# set_world_size(world)
+	# world_size = world
 
 	world_size = get_world_size()
 	maze_unlocks = max(1, num_unlocked(Unlocks.Mazes))
@@ -22,87 +26,188 @@ for _ in range(1000):
 	}
 	opposite = {North: South, South: North, East: West, West: East}
 
+	def manhattan_distance(x1, y1, x2, y2):
+		dx = x1 - x2
+		dy = y1 - y2
+		if dx < 0:
+			dx = -dx
+		if dy < 0:
+			dy = -dy
+		return dx + dy
 
-	def walk_wall_right(max_steps):
-		# """Follow the right wall; bail out if we start looping."""
-		dir_idx = 0
-		visited_states = {}
-		steps = 0
-
-		def try_step(current_idx, delta):
-			target_idx = (current_idx + delta) % 4
-			move_dir = directions[target_idx]
-			if can_move(move_dir):
-				move(move_dir)
-				return True, target_idx
-			return False, current_idx
-
-		while steps < max_steps:
-			if get_entity_type() == Entities.Treasure:
-				return True
-
-			state = (get_pos_x(), get_pos_y(), dir_idx)
-			if state in visited_states:
-				break
-			visited_states[state] = True
-
-			success, dir_idx = try_step(dir_idx, 1)
-			if success:
-				steps += 1
-				continue
-			success, dir_idx = try_step(dir_idx, 0)
-			if success:
-				steps += 1
-				continue
-			success, dir_idx = try_step(dir_idx, -1)
-			if success:
-				steps += 1
-				continue
-			success, dir_idx = try_step(dir_idx, 2)
-			if success:
-				steps += 1
-				continue
-
-		return False
-
-
-	def depth_first_search():
-		# """Deterministic DFS that copes with loops."""
+	def a_star_search():
+		# """A* 寻路：DFS + 启发式"""
+		target_x, target_y = measure()
+		
 		start = (get_pos_x(), get_pos_y())
 		visited = {start: True}
 		path = []
-
-		while True:
-			if get_entity_type() == Entities.Treasure:
-				return True
-
-			moved = False
+		
+		def get_best_direction():
+			# 返回朝向目标的最佳方向
+			best_dir = None
+			best_dist = 999999
+			current_x = get_pos_x()
+			current_y = get_pos_y()
+			
 			for direction in directions:
 				if not can_move(direction):
 					continue
+				
 				dx, dy = offsets[direction]
-				next_pos = (get_pos_x() + dx, get_pos_y() + dy)
+				next_x = current_x + dx
+				next_y = current_y + dy
+				next_pos = (next_x, next_y)
+				
 				if next_pos in visited:
 					continue
-				move(direction)
-				path.append(direction)
+				
+				# 计算到目标的曼哈顿距离
+				dist = manhattan_distance(next_x, next_y, target_x, target_y)
+				if dist < best_dist:
+					best_dist = dist
+					best_dir = direction
+			
+			return best_dir
+		
+		while True:
+			if get_entity_type() == Entities.Treasure:
+				return True
+			
+			# 优先选择朝向目标的方向
+			best_dir = get_best_direction()
+			
+			moved = False
+			if best_dir:
+				dx, dy = offsets[best_dir]
+				next_pos = (get_pos_x() + dx, get_pos_y() + dy)
+				move(best_dir)
+				path.append(best_dir)
 				visited[next_pos] = True
 				moved = True
-				break
+			else:
+				# 没有朝向目标的未访问路径，尝试任意未访问的方向
+				for direction in directions:
+					if not can_move(direction):
+						continue
+					dx, dy = offsets[direction]
+					next_pos = (get_pos_x() + dx, get_pos_y() + dy)
+					if next_pos in visited:
+						continue
+					move(direction)
+					path.append(direction)
+					visited[next_pos] = True
+					moved = True
+					break
+			
+			# 无法前进，需要回退
+			if not moved:
+				if not path:
+					return False
+				back_direction = opposite[path.pop()]
+				move(back_direction)
+		
+		return False
 
-			if moved:
-				continue
-
-			if not path:
+	def greedy_measure_walk():
+		# """贪心策略：直接朝 measure() 方向前进"""
+		max_attempts = world_size * world_size * 4
+		attempts = 0
+		stuck_counter = {}
+		
+		while attempts < max_attempts:
+			if get_entity_type() == Entities.Treasure:
+				return True
+			
+			target_x, target_y = measure()
+			current_x = get_pos_x()
+			current_y = get_pos_y()
+			
+			# 检查是否卡住
+			pos = (current_x, current_y)
+			if pos in stuck_counter:
+				stuck_counter[pos] = stuck_counter[pos] + 1
+			else:
+				stuck_counter[pos] = 1
+			
+			# 卡住超过 5 次，使用 DFS 回退
+			if stuck_counter[pos] > 5:
 				return False
-			back_direction = opposite[path.pop()]
-			move(back_direction)
+			
+			moved = False
+			
+			# 计算目标方向的优先级
+			dx = target_x - current_x
+			dy = target_y - current_y
+			
+			# 根据距离确定主要方向和次要方向
+			if dx < 0:
+				dx = -dx
+			if dy < 0:
+				dy = -dy
+			
+			# 优先走距离更远的方向
+			if dx > dy:
+				# X 方向优先
+				if current_x < target_x:
+					if can_move(East):
+						move(East)
+						moved = True
+				elif current_x > target_x:
+					if can_move(West):
+						move(West)
+						moved = True
+				
+				if not moved:
+					if current_y < target_y:
+						if can_move(North):
+							move(North)
+							moved = True
+					elif current_y > target_y:
+						if can_move(South):
+							move(South)
+							moved = True
+			else:
+				# Y 方向优先
+				if current_y < target_y:
+					if can_move(North):
+						move(North)
+						moved = True
+				elif current_y > target_y:
+					if can_move(South):
+						move(South)
+						moved = True
+				
+				if not moved:
+					if current_x < target_x:
+						if can_move(East):
+							move(East)
+							moved = True
+					elif current_x > target_x:
+						if can_move(West):
+							move(West)
+							moved = True
+			
+			# 如果主方向都走不通，尝试任意可行方向
+			if not moved:
+				for direction in directions:
+					if can_move(direction):
+						move(direction)
+						moved = True
+						break
+			
+			if moved:
+				attempts = attempts + 1
+			else:
+				# 完全卡死，无路可走
+				return False
+		
+		return False
 
-
-	estimated_steps = world_size * world_size * 8
-	reached_treasure = walk_wall_right(estimated_steps)
-	if not reached_treasure:
-		reached_treasure = depth_first_search()
-
-	if reached_treasure and get_entity_type() == Entities.Treasure:
+	# 优先使用贪心策略（最快），失败则用 A*
+	reached = greedy_measure_walk()
+	if not reached:
+		reached = a_star_search()
+	
+	if reached and get_entity_type() == Entities.Treasure:
 		harvest()
