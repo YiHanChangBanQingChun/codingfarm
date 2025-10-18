@@ -32,7 +32,7 @@ for x in range(world_size):
 			till()
 
 # 阶段1：收集初始木材（收获灌木）
-while num_items(Items.Wood) < 10000:
+while num_items(Items.Wood) < 15000:
 	for x in range(world_size):
 		for y in range(world_size):
 			go_to(x, y)
@@ -46,12 +46,14 @@ while num_items(Items.Wood) < 10000:
 				plant(Entities.Tree)
 
 # 阶段2：收集初始草地
-while num_items(Items.Hay) < 10000:
+while num_items(Items.Hay) < 15000:
 	for x in range(world_size):
 		for y in range(world_size):
 			go_to(x, y)
 			if get_water() < 0.4:
 					use_item(Items.Water)
+			if get_entity_type() == Entities.Tree:
+				harvest()
 			if get_entity_type() == Entities.Grass:
 				if can_harvest():
 					harvest()
@@ -61,12 +63,14 @@ while num_items(Items.Hay) < 10000:
 
 
 # 阶段3：收集初始胡萝卜
-while num_items(Items.Carrot) < 10000:
+while num_items(Items.Carrot) < 15000:
 	for x in range(world_size):
 		for y in range(world_size):
 			go_to(x, y)
 			if get_water() < 0.4:
 					use_item(Items.Water)
+			if get_entity_type() == Entities.Grass:
+				harvest()
 			if get_entity_type() == Entities.Carrot:
 				if can_harvest():
 					harvest()
