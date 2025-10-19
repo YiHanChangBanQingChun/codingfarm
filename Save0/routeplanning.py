@@ -1,213 +1,211 @@
 from __builtins__ import *
 
-# 优化的迷宫导航 - 使用 A* 算法直奔宝藏
-for _ in range(1000):
-	print("Maze run", _ + 1)
-	clear()
+# 优化的迷宫导航 - 重复使用迷宫,记忆路径
+# 核心思路:
+# 1. 创建一个迷宫后,不断重复使用(最多300次)
+# 2. 找到宝箱后,用use_item()让宝箱移动到新位置
+# 3. 利用之前探索的路径信息,更快找到新宝箱位置
 
-	# world = 10
-	# set_world_size(world)
-	# world_size = world
+clear()
 
-	world_size = get_world_size()
-	maze_unlocks = max(1, num_unlocked(Unlocks.Mazes))
-	maze_scale = 2 ** (maze_unlocks - 1)
-	substance_needed = world_size * maze_scale
+world_size = get_world_size()
+maze_unlocks = max(1, num_unlocked(Unlocks.Mazes))
+maze_scale = 2 ** (maze_unlocks - 1)
+substance_needed = world_size * maze_scale
 
-	plant(Entities.Bush)
-	use_item(Items.Weird_Substance, substance_needed)
+# 创建迷宫
+plant(Entities.Bush)
+use_item(Items.Weird_Substance, substance_needed)
 
-	directions = [North, East, South, West]
-	offsets = {
-		North: (0, 1),
-		East: (1, 0),
-		South: (0, -1),
-		West: (-1, 0),
-	}
-	opposite = {North: South, South: North, East: West, West: East}
+print("迷宫大小:", world_size, "x", world_size)
+print("需要Weird_Substance:", substance_needed)
 
-	def manhattan_distance(x1, y1, x2, y2):
-		dx = x1 - x2
-		dy = y1 - y2
-		if dx < 0:
-			dx = -dx
-		if dy < 0:
-			dy = -dy
-		return dx + dy
+# 全局方向定义
+directions = [North, East, South, West]
+offsets = {
+	North: (0, 1),
+	East: (1, 0),
+	South: (0, -1),
+	West: (-1, 0),
+}
+opposite = {North: South, South: North, East: West, West: East}
 
-	def a_star_search():
-		# """A* 寻路：DFS + 启发式"""
-		target_x, target_y = measure()
+# 全局已访问路径 - 跨越多次寻宝保留
+global_visited = {}
+global_visited[(get_pos_x(), get_pos_y())] = True
+
+def manhattan_distance(x1, y1, x2, y2):
+	# """计算曼哈顿距离# """
+	dx = x1 - x2
+	dy = y1 - y2
+	if dx < 0:
+		dx = -dx
+	if dy < 0:
+		dy = -dy
+	return dx + dy
+
+def find_treasure():
+	# """寻找宝箱 - 使用A*算法,利用global_visited的路径记忆# """
+	target_x, target_y = measure()
+	
+	# 本次搜索的路径栈
+	path = []
+	
+	# 本次搜索的局部visited(避免在本次搜索中重复访问)
+	local_visited = {}
+	current_pos = (get_pos_x(), get_pos_y())
+	local_visited[current_pos] = True
+	
+	def get_best_direction():
+		# """返回朝向目标的最佳方向(优先未全局访问过的,但也接受访问过的)# """
+		best_dir = None
+		best_dist = 999999
+		best_dir_visited = None
+		best_dist_visited = 999999
 		
-		start = (get_pos_x(), get_pos_y())
-		visited = {start: True}
-		path = []
+		current_x = get_pos_x()
+		current_y = get_pos_y()
 		
-		def get_best_direction():
-			# 返回朝向目标的最佳方向
-			best_dir = None
-			best_dist = 999999
-			current_x = get_pos_x()
-			current_y = get_pos_y()
+		for direction in directions:
+			if not can_move(direction):
+				continue
 			
-			for direction in directions:
-				if not can_move(direction):
-					continue
-				
-				dx, dy = offsets[direction]
-				next_x = current_x + dx
-				next_y = current_y + dy
-				next_pos = (next_x, next_y)
-				
-				if next_pos in visited:
-					continue
-				
-				# 计算到目标的曼哈顿距离
-				dist = manhattan_distance(next_x, next_y, target_x, target_y)
+			dx, dy = offsets[direction]
+			next_x = current_x + dx
+			next_y = current_y + dy
+			next_pos = (next_x, next_y)
+			
+			# 本次搜索已经访问过的不要重复
+			if next_pos in local_visited:
+				continue
+			
+			# 计算到目标的曼哈顿距离
+			dist = manhattan_distance(next_x, next_y, target_x, target_y)
+			
+			# 如果是未全局访问的位置,优先选择
+			if next_pos not in global_visited:
 				if dist < best_dist:
 					best_dist = dist
 					best_dir = direction
-			
-			return best_dir
-		
-		while True:
-			if get_entity_type() == Entities.Treasure:
-				return True
-			
-			# 优先选择朝向目标的方向
-			best_dir = get_best_direction()
-			
-			moved = False
-			if best_dir:
-				dx, dy = offsets[best_dir]
-				next_pos = (get_pos_x() + dx, get_pos_y() + dy)
-				move(best_dir)
-				path.append(best_dir)
-				visited[next_pos] = True
-				moved = True
 			else:
-				# 没有朝向目标的未访问路径，尝试任意未访问的方向
-				for direction in directions:
-					if not can_move(direction):
-						continue
-					dx, dy = offsets[direction]
-					next_pos = (get_pos_x() + dx, get_pos_y() + dy)
-					if next_pos in visited:
-						continue
-					move(direction)
-					path.append(direction)
-					visited[next_pos] = True
-					moved = True
-					break
-			
-			# 无法前进，需要回退
-			if not moved:
-				if not path:
-					return False
-				back_direction = opposite[path.pop()]
-				move(back_direction)
+				# 已全局访问的位置作为备选
+				if dist < best_dist_visited:
+					best_dist_visited = dist
+					best_dir_visited = direction
 		
-		return False
-
-	def greedy_measure_walk():
-		# """贪心策略：直接朝 measure() 方向前进"""
-		max_attempts = world_size * world_size * 4
-		attempts = 0
-		stuck_counter = {}
+		# 优先返回未访问的,如果没有就返回已访问的(利用已知路径)
+		if best_dir:
+			return best_dir, False  # 未访问的路径
+		else:
+			return best_dir_visited, True  # 已访问的路径
+	
+	max_steps = world_size * world_size * 10
+	steps = 0
+	
+	while steps < max_steps:
+		steps = steps + 1
 		
-		while attempts < max_attempts:
-			if get_entity_type() == Entities.Treasure:
-				return True
-			
-			target_x, target_y = measure()
+		if get_entity_type() == Entities.Treasure:
+			return True
+		
+		# 优先选择朝向目标的方向
+		result = get_best_direction()
+		if result:
+			best_dir, is_revisit = result
+		else:
+			best_dir = None
+			is_revisit = False
+		
+		moved = False
+		if best_dir:
+			dx, dy = offsets[best_dir]
 			current_x = get_pos_x()
 			current_y = get_pos_y()
-			
-			# 检查是否卡住
-			pos = (current_x, current_y)
-			if pos in stuck_counter:
-				stuck_counter[pos] = stuck_counter[pos] + 1
-			else:
-				stuck_counter[pos] = 1
-			
-			# 卡住超过 5 次，使用 DFS 回退
-			if stuck_counter[pos] > 5:
-				return False
-			
-			moved = False
-			
-			# 计算目标方向的优先级
-			dx = target_x - current_x
-			dy = target_y - current_y
-			
-			# 根据距离确定主要方向和次要方向
-			if dx < 0:
-				dx = -dx
-			if dy < 0:
-				dy = -dy
-			
-			# 优先走距离更远的方向
-			if dx > dy:
-				# X 方向优先
-				if current_x < target_x:
-					if can_move(East):
-						move(East)
-						moved = True
-				elif current_x > target_x:
-					if can_move(West):
-						move(West)
-						moved = True
-				
-				if not moved:
-					if current_y < target_y:
-						if can_move(North):
-							move(North)
-							moved = True
-					elif current_y > target_y:
-						if can_move(South):
-							move(South)
-							moved = True
-			else:
-				# Y 方向优先
-				if current_y < target_y:
-					if can_move(North):
-						move(North)
-						moved = True
-				elif current_y > target_y:
-					if can_move(South):
-						move(South)
-						moved = True
-				
-				if not moved:
-					if current_x < target_x:
-						if can_move(East):
-							move(East)
-							moved = True
-					elif current_x > target_x:
-						if can_move(West):
-							move(West)
-							moved = True
-			
-			# 如果主方向都走不通，尝试任意可行方向
-			if not moved:
-				for direction in directions:
-					if can_move(direction):
-						move(direction)
-						moved = True
-						break
-			
-			if moved:
-				attempts = attempts + 1
-			else:
-				# 完全卡死，无路可走
-				return False
+			next_pos = (current_x + dx, current_y + dy)
+			move(best_dir)
+			path.append(best_dir)
+			local_visited[next_pos] = True
+			# 只记录新探索的路径到全局
+			if not is_revisit:
+				global_visited[next_pos] = True
+			moved = True
+		else:
+			# 没有任何可行方向,尝试任意未本次访问的方向
+			for direction in directions:
+				if not can_move(direction):
+					continue
+				dx, dy = offsets[direction]
+				current_x = get_pos_x()
+				current_y = get_pos_y()
+				next_pos = (current_x + dx, current_y + dy)
+				if next_pos in local_visited:
+					continue
+				move(direction)
+				path.append(direction)
+				local_visited[next_pos] = True
+				if next_pos not in global_visited:
+					global_visited[next_pos] = True
+				moved = True
+				break
 		
-		return False
-
-	# 优先使用贪心策略（最快），失败则用 A*
-	reached = greedy_measure_walk()
-	if not reached:
-		reached = a_star_search()
+		# 无法前进,需要回退
+		if not moved:
+			if not path:
+				return False
+			back_direction = opposite[path.pop()]
+			move(back_direction)
 	
-	if reached and get_entity_type() == Entities.Treasure:
-		harvest()
+	return False
+
+# 主循环 - 重复使用迷宫最多300次
+max_reuses = 300
+treasure_count = 0
+
+while treasure_count < max_reuses:
+	print("=== 寻找第", treasure_count + 1, "个宝箱 ===")
+	
+	# 获取当前宝箱位置
+	treasure_pos = measure()
+	if treasure_pos == None:
+		print("迷宫中没有宝箱了,结束")
+		break
+	
+	target_x, target_y = treasure_pos
+	current_x = get_pos_x()
+	current_y = get_pos_y()
+	print("当前位置: (", current_x, ",", current_y, ")")
+	print("宝箱位置: (", target_x, ",", target_y, ")")
+	
+	# 寻找宝箱
+	found = find_treasure()
+	
+	if not found:
+		print("无法找到宝箱,可能被困住了")
+		break
+	
+	# 确认找到宝箱
+	if get_entity_type() != Entities.Treasure:
+		print("错误:到达目标但不是宝箱")
+		break
+	
+	print("找到宝箱!")
+	# harvest()
+	treasure_count = treasure_count + 1
+	
+	# 关键:在宝箱上使用Weird_Substance让宝箱移动(不收割!)
+	# 这会让宝箱移动到新位置,同时可能移除一些墙壁
+	use_item(Items.Weird_Substance, substance_needed)
+	
+	print("宝箱已移动到新位置,继续寻找...")
+	print("已找到", treasure_count, "个宝箱")
+	print("已探索路径数:", len(global_visited))
+	# print()
+
+# 最后收割宝箱
+if get_entity_type() == Entities.Treasure:
+	harvest()
+	print("最后收割宝箱")
+
+print("=== 完成! ===")
+print("总共找到", treasure_count, "个宝箱")
+print("总共获得Gold:", num_items(Items.Gold))
