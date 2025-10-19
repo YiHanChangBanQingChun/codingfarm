@@ -5,7 +5,7 @@ from __builtins__ import *
 # 1. 创建一个迷宫后,不断重复使用(最多300次)
 # 2. 找到宝箱后,用use_item()让宝箱移动到新位置
 # 3. 利用之前探索的路径信息,更快找到新宝箱位置
-
+pet_the_piggy()
 clear()
 
 world_size = get_world_size()
@@ -16,9 +16,6 @@ substance_needed = world_size * maze_scale
 # 创建迷宫
 plant(Entities.Bush)
 use_item(Items.Weird_Substance, substance_needed)
-
-print("迷宫大小:", world_size, "x", world_size)
-print("需要Weird_Substance:", substance_needed)
 
 # 全局方向定义
 directions = [North, East, South, West]
@@ -162,50 +159,32 @@ max_reuses = 300
 treasure_count = 0
 
 while treasure_count < max_reuses:
-	print("=== 寻找第", treasure_count + 1, "个宝箱 ===")
-	
 	# 获取当前宝箱位置
 	treasure_pos = measure()
 	if treasure_pos == None:
-		print("迷宫中没有宝箱了,结束")
 		break
 	
 	target_x, target_y = treasure_pos
 	current_x = get_pos_x()
 	current_y = get_pos_y()
-	print("当前位置: (", current_x, ",", current_y, ")")
-	print("宝箱位置: (", target_x, ",", target_y, ")")
 	
 	# 寻找宝箱
 	found = find_treasure()
 	
 	if not found:
-		print("无法找到宝箱,可能被困住了")
 		break
 	
 	# 确认找到宝箱
 	if get_entity_type() != Entities.Treasure:
-		print("错误:到达目标但不是宝箱")
 		break
 	
-	print("找到宝箱!")
-	# harvest()
 	treasure_count = treasure_count + 1
-	
-	# 关键:在宝箱上使用Weird_Substance让宝箱移动(不收割!)
-	# 这会让宝箱移动到新位置,同时可能移除一些墙壁
-	use_item(Items.Weird_Substance, substance_needed)
-	
-	print("宝箱已移动到新位置,继续寻找...")
-	print("已找到", treasure_count, "个宝箱")
-	print("已探索路径数:", len(global_visited))
-	# print()
 
-# 最后收割宝箱
-if get_entity_type() == Entities.Treasure:
-	harvest()
-	print("最后收割宝箱")
-
-print("=== 完成! ===")
-print("总共找到", treasure_count, "个宝箱")
-print("总共获得Gold:", num_items(Items.Gold))
+	# 关键:检查是否是最后一次
+	if treasure_count >= max_reuses:
+		harvest()
+		break
+	else:
+		use_item(Items.Weird_Substance, substance_needed)
+		print("已探索路径数:", len(global_visited))
+		print()
