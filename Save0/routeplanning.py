@@ -1,38 +1,6 @@
 from __builtins__ import *
 
-# 优化的迷宫导航 - 重复使用迷宫,记忆路径
-# 核心思路:
-# 1. 创建一个迷宫后,不断重复使用(最多300次)
-# 2. 找到宝箱后,用use_item()让宝箱移动到新位置
-# 3. 利用之前探索的路径信息,更快找到新宝箱位置
-pet_the_piggy()
-clear()
-
-world_size = get_world_size()
-maze_unlocks = max(1, num_unlocked(Unlocks.Mazes))
-maze_scale = 2 ** (maze_unlocks - 1)
-substance_needed = world_size * maze_scale
-
-# 创建迷宫
-plant(Entities.Bush)
-use_item(Items.Weird_Substance, substance_needed)
-
-# 全局方向定义
-directions = [North, East, South, West]
-offsets = {
-	North: (0, 1),
-	East: (1, 0),
-	South: (0, -1),
-	West: (-1, 0),
-}
-opposite = {North: South, South: North, East: West, West: East}
-
-# 全局已访问路径 - 跨越多次寻宝保留
-global_visited = {}
-global_visited[(get_pos_x(), get_pos_y())] = True
-
 def manhattan_distance(x1, y1, x2, y2):
-	# """计算曼哈顿距离# """
 	dx = x1 - x2
 	dy = y1 - y2
 	if dx < 0:
@@ -41,20 +9,23 @@ def manhattan_distance(x1, y1, x2, y2):
 		dy = -dy
 	return dx + dy
 
-def find_treasure():
-	# """寻找宝箱 - 使用A*算法,利用global_visited的路径记忆# """
+def to_int(value):
+	return value // 1
+
+def find_treasure(treasure_count, global_visited, directions, offsets, opposite, world_size):
 	target_x, target_y = measure()
 	
-	# 本次搜索的路径栈
 	path = []
 	
-	# 本次搜索的局部visited(避免在本次搜索中重复访问)
 	local_visited = {}
 	current_pos = (get_pos_x(), get_pos_y())
 	local_visited[current_pos] = True
 	
-	def get_best_direction():
-		# """返回朝向目标的最佳方向(优先未全局访问过的,但也接受访问过的)# """
+	base_greedy = 50
+	openness_factor = min(treasure_count / 30, 5.0)
+	greedy_attempts = to_int(base_greedy * (1 + openness_factor))
+	
+	def get_best_direction(allow_revisit_for_greedy):
 		best_dir = None
 		best_dist = 999999
 		best_dir_visited = None
@@ -72,32 +43,35 @@ def find_treasure():
 			next_y = current_y + dy
 			next_pos = (next_x, next_y)
 			
-			# 本次搜索已经访问过的不要重复
 			if next_pos in local_visited:
 				continue
 			
-			# 计算到目标的曼哈顿距离
 			dist = manhattan_distance(next_x, next_y, target_x, target_y)
 			
-			# 如果是未全局访问的位置,优先选择
-			if next_pos not in global_visited:
+			if allow_revisit_for_greedy:
 				if dist < best_dist:
 					best_dist = dist
 					best_dir = direction
 			else:
-				# 已全局访问的位置作为备选
-				if dist < best_dist_visited:
-					best_dist_visited = dist
-					best_dir_visited = direction
+				if next_pos not in global_visited:
+					if dist < best_dist:
+						best_dist = dist
+						best_dir = direction
+				else:
+					if dist < best_dist_visited:
+						best_dist_visited = dist
+						best_dir_visited = direction
 		
-		# 优先返回未访问的,如果没有就返回已访问的(利用已知路径)
 		if best_dir:
-			return best_dir, False  # 未访问的路径
+			return best_dir, False
 		else:
-			return best_dir_visited, True  # 已访问的路径
+			return best_dir_visited, True
 	
 	max_steps = world_size * world_size * 10
 	steps = 0
+	last_distance = 999999
+	greedy_stuck_count = 0
+	greedy_extended = False
 	
 	while steps < max_steps:
 		steps = steps + 1
@@ -105,8 +79,27 @@ def find_treasure():
 		if get_entity_type() == Entities.Treasure:
 			return True
 		
-		# 优先选择朝向目标的方向
-		result = get_best_direction()
+		current_distance = manhattan_distance(get_pos_x(), get_pos_y(), target_x, target_y)
+		
+		if steps <= greedy_attempts:
+			if current_distance < last_distance:
+				greedy_stuck_count = 0
+			else:
+				greedy_stuck_count = greedy_stuck_count + 1
+			
+			if greedy_stuck_count > 5 and not greedy_extended:
+				greedy_extended = True
+			
+			last_distance = current_distance
+		
+		if greedy_extended and current_distance > 3:
+			use_greedy = True
+		elif steps <= greedy_attempts:
+			use_greedy = True
+		else:
+			use_greedy = False
+		
+		result = get_best_direction(use_greedy)
 		if result:
 			best_dir, is_revisit = result
 		else:
@@ -122,12 +115,10 @@ def find_treasure():
 			move(best_dir)
 			path.append(best_dir)
 			local_visited[next_pos] = True
-			# 只记录新探索的路径到全局
 			if not is_revisit:
 				global_visited[next_pos] = True
 			moved = True
 		else:
-			# 没有任何可行方向,尝试任意未本次访问的方向
 			for direction in directions:
 				if not can_move(direction):
 					continue
@@ -145,7 +136,6 @@ def find_treasure():
 				moved = True
 				break
 		
-		# 无法前进,需要回退
 		if not moved:
 			if not path:
 				return False
@@ -154,37 +144,95 @@ def find_treasure():
 	
 	return False
 
-# 主循环 - 重复使用迷宫最多300次
-max_reuses = 300
-treasure_count = 0
+def main(global_visited, directions, offsets, opposite, world_size, substance_needed):
+	max_reuses = 300
+	treasure_count = 0
+	base_refresh_interval = 15
+	consecutive_immediate_finds = 0
 
-while treasure_count < max_reuses:
-	# 获取当前宝箱位置
-	treasure_pos = measure()
-	if treasure_pos == None:
-		break
-	
-	target_x, target_y = treasure_pos
-	current_x = get_pos_x()
-	current_y = get_pos_y()
-	
-	# 寻找宝箱
-	found = find_treasure()
-	
-	if not found:
-		break
-	
-	# 确认找到宝箱
-	if get_entity_type() != Entities.Treasure:
-		break
-	
-	treasure_count = treasure_count + 1
+	while treasure_count < max_reuses:
+		if treasure_count < 80:
+			refresh_interval = base_refresh_interval
+		elif treasure_count < 160:
+			refresh_interval = base_refresh_interval * 2
+		else:
+			refresh_interval = base_refresh_interval * 3
+		
+		if treasure_count > 0 and treasure_count % refresh_interval == 0:
+			old_count = len(global_visited)
+			current_pos = (get_pos_x(), get_pos_y())
+			new_visited = {current_pos: True}
+			count = 0
+			for pos in global_visited:
+				if count % 2 == 0:
+					new_visited[pos] = True
+				count = count + 1
+			global_visited = {}
+			for pos in new_visited:
+				global_visited[pos] = True
+		
+		treasure_pos = measure()
+		if treasure_pos == None:
+			break
+		
+		target_x, target_y = treasure_pos
+		current_x = get_pos_x()
+		current_y = get_pos_y()
+		
+		drone_pos_before = (get_pos_x(), get_pos_y())
+		found = find_treasure(treasure_count, global_visited, directions, offsets, opposite, world_size)
+		
+		if get_entity_type() != Entities.Treasure:
+			break
+		
+		drone_pos_after = (get_pos_x(), get_pos_y())
+		if drone_pos_before == drone_pos_after:
+			consecutive_immediate_finds = consecutive_immediate_finds + 1
+		else:
+			consecutive_immediate_finds = 0
+		
+		if consecutive_immediate_finds >= 3:
+			harvest()
+			break
 
-	# 关键:检查是否是最后一次
-	if treasure_count >= max_reuses:
-		harvest()
-		break
-	else:
 		use_item(Items.Weird_Substance, substance_needed)
-		print("已探索路径数:", len(global_visited))
-		print()
+		treasure_count = treasure_count + 1
+
+if __name__ == "__main__":
+	
+	for _ in range(5):
+
+		single_drone_mode = False
+
+		if single_drone_mode:
+			target_gold = 616448
+			set_world_size(8)
+		else:
+			target_gold = 9863168
+			set_world_size(32)
+
+		clear()
+
+		initial_gold = num_items(Items.Gold)
+
+		world_size = get_world_size()
+		maze_unlocks = max(1, num_unlocked(Unlocks.Mazes))
+		maze_scale = 2 ** (maze_unlocks - 1)
+		substance_needed = world_size * maze_scale
+
+		plant(Entities.Bush)
+		use_item(Items.Weird_Substance, substance_needed)
+
+		directions = [North, East, South, West]
+		offsets = {
+			North: (0, 1),
+			East: (1, 0),
+			South: (0, -1),
+			West: (-1, 0),
+		}
+		opposite = {North: South, South: North, East: West, West: East}
+
+		global_visited = {}
+		global_visited[(get_pos_x(), get_pos_y())] = True
+
+		main(global_visited, directions, offsets, opposite, world_size, substance_needed)

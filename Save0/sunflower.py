@@ -1,6 +1,6 @@
 def raxis(i, n=get_world_size()):
 
-	return i // n, i % n
+    return i // n, i % n
 
 
 
@@ -8,63 +8,63 @@ def raxis(i, n=get_world_size()):
 
 def move_to(x, y):
 
-	n = get_world_size()
+    n = get_world_size()
 
-	nowx = get_pos_x()
+    nowx = get_pos_x()
 
-	nowy = get_pos_y()
+    nowy = get_pos_y()
 
-	diffx = x - nowx
+    diffx = x - nowx
 
-	abs_diffx = abs(diffx)
+    abs_diffx = abs(diffx)
 
-	if abs_diffx > n // 2:
+    if abs_diffx > n // 2:
 
-		if diffx >= 0:
+        if diffx >= 0:
 
-			diffx = abs_diffx - n
+            diffx = abs_diffx - n
 
-		else:
+        else:
 
-			diffx = n - abs_diffx
+            diffx = n - abs_diffx
 
-	diffy = y - nowy
+    diffy = y - nowy
 
-	abs_diffy = abs(diffy)
+    abs_diffy = abs(diffy)
 
-	if abs_diffy > n // 2:
+    if abs_diffy > n // 2:
 
-		if diffy >= 0:
+        if diffy >= 0:
 
-			diffy = abs_diffy - n
+            diffy = abs_diffy - n
 
-		else:
+        else:
 
-			diffy = n - abs_diffy
+            diffy = n - abs_diffy
 
-	if diffx >= 0:
+    if diffx >= 0:
 
-		for _ in range(diffx):
+        for _ in range(diffx):
 
-			move(East)
+            move(East)
 
-	else:
+    else:
 
-		for _ in range(-diffx):
+        for _ in range(-diffx):
 
-			move(West)
+            move(West)
 
-	if diffy >= 0:
+    if diffy >= 0:
 
-		for _ in range(diffy):
+        for _ in range(diffy):
 
-			move(North)
+            move(North)
 
-	else:
+    else:
 
-		for _ in range(-diffy):
+        for _ in range(-diffy):
 
-			move(South)
+            move(South)
 
 
 
@@ -78,35 +78,35 @@ axis = []
 
 def water_square():
 
-	n = 16
+    n = 16
 
-	dx = get_pos_x() % 2
+    dx = get_pos_x() % 2
 
-	dy = get_pos_y() % 2
+    dy = get_pos_y() % 2
 
-	while True:
+    while True:
 
-		for i in range(n**2 - 1, -1, -1):
+        for i in range(n**2 - 1, -1, -1):
 
-			x, y = raxis(i, n)
+            x, y = raxis(i, n)
 
-			if x % 2 == 1:
+            if x % 2 == 1:
 
-				y = n - y - 1
+                y = n - y - 1
 
-			x += n * dx
+            x += n * dx
 
-			y += n * dy
+            y += n * dy
 
-			move_to(x, y)
+            move_to(x, y)
 
-			if x % 8 > 3 and get_water() < 0.7:
+            if x % 8 > 3 and get_water() < 0.7:
 
-				use_item(Items.Water)
+                use_item(Items.Water)
 
-			elif get_water() < 0.2:
+            elif get_water() < 0.2:
 
-				use_item(Items.Water)
+                use_item(Items.Water)
 
 
 
@@ -114,69 +114,69 @@ def water_square():
 
 def plant_square():
 
-	n = 8
+    n = 8
 
-	dx = get_pos_x() % 4
+    dx = get_pos_x() % 4
 
-	dy = get_pos_y() % 4
+    dy = get_pos_y() % 4
 
-	flower_num_t = {
+    flower_num_t = {
 
-		7: [],
+        7: [],
 
-		8: [],
+        8: [],
 
-		9: [],
+        9: [],
 
-		10: [],
+        10: [],
 
-		11: [],
+        11: [],
 
-		12: [],
+        12: [],
 
-		13: [],
+        13: [],
 
-		14: [],
+        14: [],
 
-		15: [],
+        15: [],
 
-	}
+    }
 
-	for i in range(n**2):
+    for i in range(n**2):
 
-		x, y = raxis(i, n)
+        x, y = raxis(i, n)
 
-		if x % 2 == 1:
+        if x % 2 == 1:
 
-			y = n - y - 1
+            y = n - y - 1
 
-		x += n * dx
+        x += n * dx
 
-		y += n * dy
+        y += n * dy
 
-		move_to(x, y)
+        move_to(x, y)
 
-		if get_entity_type() != Entities.Sunflower and get_entity_type() != None:
+        if get_entity_type() != Entities.Sunflower and get_entity_type() != None:
 
-			while not can_harvest():
+            while not can_harvest():
 
-				use_item(Items.Fertilizer)
+                use_item(Items.Fertilizer)
 
-			harvest()
+            harvest()
 
-		if get_ground_type() != Grounds.Soil:
+        if get_ground_type() != Grounds.Soil:
 
-			till()
+            till()
 
-		if get_ground_type() == Grounds.Soil:
+        if get_ground_type() == Grounds.Soil:
 
-			plant(Entities.Sunflower)
+            plant(Entities.Sunflower)
 
-		t = get_pos_x(), get_pos_y()
+        t = get_pos_x(), get_pos_y()
 
-		flower_num_t[measure()].append(t)
+        flower_num_t[measure()].append(t)
 
-	return flower_num_t
+    return flower_num_t
 
 
 
@@ -184,21 +184,21 @@ def plant_square():
 
 def harvest_square():
 
-	global axis
+    global axis
 
-	axis_t = axis
+    axis_t = axis
 
-	for x, y in axis_t:
+    for x, y in axis_t:
 
-		move_to(x, y)
+        move_to(x, y)
 
-		while not can_harvest():
+        while not can_harvest():
 
-			use_item(Items.Fertilizer)
+            use_item(Items.Fertilizer)
 
-		harvest()
+        harvest()
 
-	return
+    return
 
 
 
@@ -206,54 +206,54 @@ def harvest_square():
 
 def main():
 
-	global axis
+    global axis
 
-	for i in range(2):
+    for i in range(2):
 
-		for j in range(2):
+        for j in range(2):
 
-			move_to(1 - i, 1 - j)
+            move_to(1 - i, 1 - j)
 
-			spawn_drone(water_square)
+            spawn_drone(water_square)
 
-	while True:
+    while True:
 
-		flower_num = []
+        flower_num = []
 
-		drones = []
+        drones = []
 
-		for i in range(4):
+        for i in range(4):
 
-			for j in range(4):
+            for j in range(4):
 
-				move_to(3 - i, 3 - j)
+                move_to(3 - i, 3 - j)
 
-				drones.append(spawn_drone(plant_square))
+                drones.append(spawn_drone(plant_square))
 
-		for i in drones:
+        for i in drones:
 
-			flower_num.append(wait_for(i))
+            flower_num.append(wait_for(i))
 
-		drones = []
+        drones = []
 
-		for i in range(15, 6, -1):
+        for i in range(15, 6, -1):
 
-			for j in flower_num:
+            for j in flower_num:
 
-				axis = j[i]
+                axis = j[i]
 
-				drones.append(spawn_drone(harvest_square))
+                drones.append(spawn_drone(harvest_square))
 
-			for j in drones:
+            for j in drones:
 
-				wait_for(j)
+                wait_for(j)
 
-			drones = []
+            drones = []
 
 
 
 
 
 if __name__ == "__main__":
-	clear()
-	main()
+    clear()
+    main()
