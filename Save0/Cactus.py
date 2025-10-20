@@ -1,70 +1,70 @@
 def move_to(x, y):
 
-	n = get_world_size()
+    n = get_world_size()
 
-	nowx = get_pos_x()
+    nowx = get_pos_x()
 
-	nowy = get_pos_y()
+    nowy = get_pos_y()
 
-	diffx = x - nowx
+    diffx = x - nowx
 
-	diffy = y - nowy
+    diffy = y - nowy
 
-	if diffx == 0 and diffy == 0:
+    if diffx == 0 and diffy == 0:
 
-		return
+        return
 
-	if diffx != 0:
+    if diffx != 0:
 
-		abs_diffx = abs(diffx)
+        abs_diffx = abs(diffx)
 
-		if abs_diffx > n // 2:
+        if abs_diffx > n // 2:
 
-			if diffx >= 0:
+            if diffx >= 0:
 
-				diffx = abs_diffx - n
+                diffx = abs_diffx - n
 
-			else:
+            else:
 
-				diffx = n - abs_diffx
+                diffx = n - abs_diffx
 
-	if diffy != 0:
+    if diffy != 0:
 
-		abs_diffy = abs(diffy)
+        abs_diffy = abs(diffy)
 
-		if abs_diffy > n // 2:
+        if abs_diffy > n // 2:
 
-			if diffy >= 0:
+            if diffy >= 0:
 
-				diffy = abs_diffy - n
+                diffy = abs_diffy - n
 
-			else:
+            else:
 
-				diffy = n - abs_diffy
+                diffy = n - abs_diffy
 
-	if diffx > 0:
+    if diffx > 0:
 
-		for _ in range(diffx):
+        for _ in range(diffx):
 
-			move(East)
+            move(East)
 
-	elif diffx < 0:
+    elif diffx < 0:
 
-		for _ in range(-diffx):
+        for _ in range(-diffx):
 
-			move(West)
+            move(West)
 
-	if diffy > 0:
+    if diffy > 0:
 
-		for _ in range(diffy):
+        for _ in range(diffy):
 
-			move(North)
+            move(North)
 
-	elif diffy < 0:
+    elif diffy < 0:
 
-		for _ in range(-diffy):
+        for _ in range(-diffy):
 
-			move(South)
+            move(South)
 
 
 
@@ -72,47 +72,47 @@ def move_to(x, y):
 
 def plant_single():
 
-	n = get_world_size()
+    n = get_world_size()
 
-	for i in range(n):
+    for i in range(n):
 
-		if (
+        if (
 
-			get_entity_type() != Entities.Cactus
+            get_entity_type() != Entities.Cactus
 
-			and get_entity_type() != None
+            and get_entity_type() != None
 
-			and get_entity_type() != Entities.Dead_Pumpkin
+            and get_entity_type() != Entities.Dead_Pumpkin
 
-		):
+        ):
 
-			while not can_harvest():
+            while not can_harvest():
 
-				if num_items(Items.Fertilizer) > 1:
+                if num_items(Items.Fertilizer) > 1:
 
-					use_item(Items.Fertilizer)
+                    use_item(Items.Fertilizer)
 
-				elif num_items(Items.Water) > 1:
+                elif num_items(Items.Water) > 1:
 
-					use_item(Items.Water)
+                    use_item(Items.Water)
 
-			harvest()
+            harvest()
 
-		if get_ground_type() != Grounds.Soil:
+        if get_ground_type() != Grounds.Soil:
 
-			till()
+            till()
 
-		if get_ground_type() == Grounds.Soil:
+        if get_ground_type() == Grounds.Soil:
 
-			plant(Entities.Cactus)
+            plant(Entities.Cactus)
 
-		if i == n - 1:
+        if i == n - 1:
 
-			return
+            return
 
-		move(North)
+        move(North)
 
-	return
+    return
 
 
 
@@ -120,29 +120,29 @@ def plant_single():
 
 def sort_col_single():
 
-	n = get_world_size()
+    n = get_world_size()
 
-	x = get_pos_x()
+    x = get_pos_x()
 
-	for i in range(n - 1):
+    for i in range(n - 1):
 
-		swapped = False
+        swapped = False
 
-		for j in range(n - 2, i - 1, -1):
+        for j in range(n - 2, i - 1, -1):
 
-			move_to(x, j)
+            move_to(x, j)
 
-			if measure(North) < measure():
+            if measure(North) < measure():
 
-				swap(North)
+                swap(North)
 
-				swapped = True
+                swapped = True
 
-		if not swapped:
+        if not swapped:
 
-			return
+            return
 
-	return
+    return
 
 
 
@@ -150,29 +150,29 @@ def sort_col_single():
 
 def sort_row_single():
 
-	n = get_world_size()
+    n = get_world_size()
 
-	y = get_pos_y()
+    y = get_pos_y()
 
-	for i in range(n - 1):
+    for i in range(n - 1):
 
-		swapped = False
+        swapped = False
 
-		for j in range(n - 2, i - 1, -1):
+        for j in range(n - 2, i - 1, -1):
 
-			move_to(j, y)
+            move_to(j, y)
 
-			if measure(East) < measure():
+            if measure(East) < measure():
 
-				swap(East)
+                swap(East)
 
-				swapped = True
+                swapped = True
 
-		if not swapped:
+        if not swapped:
 
-			return
+            return
 
-	return
+    return
 
 
 
@@ -180,65 +180,65 @@ def sort_row_single():
 
 def main():
 
-	n = get_world_size()
+    n = get_world_size()
 
-	move_to(0, 0)
+    move_to(0, 0)
 
-	while True:
+    while True:
 
-		drones = []
+        drones = []
 
-		for i in range(n - 1):
+        for i in range(n - 1):
 
-			drones.append(spawn_drone(plant_single))
+            drones.append(spawn_drone(plant_single))
 
-			move(East)
+            move(East)
 
-		plant_single()
+        plant_single()
 
-		move_to(0, n - 1)
+        move_to(0, n - 1)
 
-		for i in drones:
+        for i in drones:
 
-			wait_for(i)
+            wait_for(i)
 
-		drones = []
+        drones = []
 
-		for i in range(n - 1):
+        for i in range(n - 1):
 
-			move_to(i, n - 1)
+            move_to(i, n - 1)
 
-			drones.append(spawn_drone(sort_col_single))
+            drones.append(spawn_drone(sort_col_single))
 
-		move_to(n - 1, n - 1)
+        move_to(n - 1, n - 1)
 
-		sort_col_single()
+        sort_col_single()
 
-		move_to(n - 1, 0)
+        move_to(n - 1, 0)
 
-		for i in drones:
+        for i in drones:
 
-			wait_for(i)
+            wait_for(i)
 
-		drones = []
+        drones = []
 
-		for i in range(n - 1):
+        for i in range(n - 1):
 
-			move_to(n - 1, i)
+            move_to(n - 1, i)
 
-			drones.append(spawn_drone(sort_row_single))
+            drones.append(spawn_drone(sort_row_single))
 
-		move_to(n - 1, n - 1)
+        move_to(n - 1, n - 1)
 
-		sort_row_single()
+        sort_row_single()
 
-		move_to(0, 0)
+        move_to(0, 0)
 
-		for i in drones:
+        for i in drones:
 
-			wait_for(i)
+            wait_for(i)
 
-		harvest()
+        harvest()
 
 
 
@@ -246,4 +246,4 @@ def main():
 
 if __name__ == "__main__":
 
-	main()
+    main()

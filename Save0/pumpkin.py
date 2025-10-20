@@ -1,6 +1,6 @@
 def raxis(i, n=get_world_size()):
 
-	return i // n, i % n
+    return i // n, i % n
 
 
 
@@ -8,63 +8,63 @@ def raxis(i, n=get_world_size()):
 
 def move_to(x, y):
 
-	n = get_world_size()
+    n = get_world_size()
 
-	nowx = get_pos_x()
+    nowx = get_pos_x()
 
-	nowy = get_pos_y()
+    nowy = get_pos_y()
 
-	diffx = x - nowx
+    diffx = x - nowx
 
-	abs_diffx = abs(diffx)
+    abs_diffx = abs(diffx)
 
-	if abs_diffx > n // 2:
+    if abs_diffx > n // 2:
 
-		if diffx >= 0:
+        if diffx >= 0:
 
-			diffx = abs_diffx - n
+            diffx = abs_diffx - n
 
-		else:
+        else:
 
-			diffx = n - abs_diffx
+            diffx = n - abs_diffx
 
-	diffy = y - nowy
+    diffy = y - nowy
 
-	abs_diffy = abs(diffy)
+    abs_diffy = abs(diffy)
 
-	if abs_diffy > n // 2:
+    if abs_diffy > n // 2:
 
-		if diffy >= 0:
+        if diffy >= 0:
 
-			diffy = abs_diffy - n
+            diffy = abs_diffy - n
 
-		else:
+        else:
 
-			diffy = n - abs_diffy
+            diffy = n - abs_diffy
 
-	if diffx >= 0:
+    if diffx >= 0:
 
-		for _ in range(diffx):
+        for _ in range(diffx):
 
-			move(East)
+            move(East)
 
-	else:
+    else:
 
-		for _ in range(-diffx):
+        for _ in range(-diffx):
 
-			move(West)
+            move(West)
 
-	if diffy >= 0:
+    if diffy >= 0:
 
-		for _ in range(diffy):
+        for _ in range(diffy):
 
-			move(North)
+            move(North)
 
-	else:
+    else:
 
-		for _ in range(-diffy):
+        for _ in range(-diffy):
 
-			move(South)
+            move(South)
 
 
 
@@ -72,69 +72,69 @@ def move_to(x, y):
 
 def plant_square4():
 
-	n = 8
+    n = 8
 
-	dx = get_pos_x() % 8
+    dx = get_pos_x() % 8
 
-	dy = get_pos_y() % 4
+    dy = get_pos_y() % 4
 
-	need_check = []
+    need_check = []
 
-	need_num = n**2 // 2
+    need_num = n**2 // 2
 
-	for _ in range(n**2):
+    for _ in range(n**2):
 
-		need_check.append(True)
+        need_check.append(True)
 
-	while need_num > 0:
+    while need_num > 0:
 
-		for i in range(n**2 // 2):
+        for i in range(n**2 // 2):
 
-			if need_check[i]:
+            if need_check[i]:
 
-				x, y = raxis(i, n)
+                x, y = raxis(i, n)
 
-				if x % 2 == 1:
+                if x % 2 == 1:
 
-					y = n - y - 1
+                    y = n - y - 1
 
-				x += n // 2 * dx
+                x += n // 2 * dx
 
-				y += n * dy
+                y += n * dy
 
-				move_to(x, y)
+                move_to(x, y)
 
-				if get_ground_type() != Grounds.Soil:
+                if get_ground_type() != Grounds.Soil:
 
-					till()
+                    till()
 
-				if get_entity_type() != Entities.Pumpkin:
+                if get_entity_type() != Entities.Pumpkin:
 
-					if can_harvest():
+                    if can_harvest():
 
-						harvest()
+                        harvest()
 
-					plant(Entities.Pumpkin)
+                    plant(Entities.Pumpkin)
 
-				while (not can_harvest()) and num_drones() < 6:
+                while (not can_harvest()) and num_drones() < 6:
 
-					if get_entity_type() == Entities.Dead_Pumpkin:
+                    if get_entity_type() == Entities.Dead_Pumpkin:
 
-						plant(Entities.Pumpkin)
+                        plant(Entities.Pumpkin)
 
-					use_item(Items.Fertilizer)
+                    use_item(Items.Fertilizer)
 
-				while (not can_harvest()) and get_water() < 0.6 and need_num < 10:
+                while (not can_harvest()) and get_water() < 0.6 and need_num < 10:
 
-					use_item(Items.Water)
+                    use_item(Items.Water)
 
-				if can_harvest():
+                if can_harvest():
 
-					need_check[i] = False
+                    need_check[i] = False
 
-					need_num -= 1
+                    need_num -= 1
 
-	return
+    return
 
 
 
@@ -142,35 +142,35 @@ def plant_square4():
 
 def main():
 
-	while True:
+    while True:
 
-		drones = []
+        drones = []
 
-		x, y = get_pos_x(), get_pos_y()
+        x, y = get_pos_x(), get_pos_y()
 
-		x -= x % 8
+        x -= x % 8
 
-		y -= y % 4
+        y -= y % 4
 
-		for i in range(8):
+        for i in range(8):
 
-			for j in range(4):
+            for j in range(4):
 
-				move_to(7 - i + x, 3 - j + y)
+                move_to(7 - i + x, 3 - j + y)
 
-				if i == 7 and j == 3:
+                if i == 7 and j == 3:
 
-					break
+                    break
 
-				drones.append(spawn_drone(plant_square4))
+                drones.append(spawn_drone(plant_square4))
 
-		plant_square4()
+        plant_square4()
 
-		for i in drones:
+        for i in drones:
 
-			wait_for(i)
+            wait_for(i)
 
-		harvest()
+        harvest()
 
 
 
@@ -178,4 +178,4 @@ def main():
 
 if __name__ == "__main__":
 
-	main()
+    main()
