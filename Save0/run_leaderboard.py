@@ -1,3 +1,3 @@
 from __builtins__ import *
 
-leaderboard_run(Leaderboards.Maze_Single, "routeplanning", 2000)
+leaderboard_run(Leaderboards.Fastest_Reset, "f3", 2000000)
